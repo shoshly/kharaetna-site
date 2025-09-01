@@ -19,6 +19,7 @@
     .note{font-size:13px; color:var(--muted)}
     .pill{display:inline-block; background:#0f766e15; color:var(--brand); padding:4px 10px; border-radius:999px; font-size:12px; font-weight:700}
     .vendor{font-size:12px; opacity:.9}
+    .empty{background:#fff; border-radius:12px; padding:24px; text-align:center; color:#666}
   </style>
 </head>
 <body>
@@ -31,48 +32,16 @@
 </header>
 
 <main>
-  <section class="grid">
-
-    <!-- مثال بطاقة 1 (Amazon) -->
-    <article class="card">
-      <img src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=1200&auto=format&fit=crop" alt="سماعات لاسلكية">
-      <div class="p">
-        <span class="pill vendor">Amazon.sa</span>
-        <h3 style="margin:8px 0 6px">سماعات لاسلكية</h3>
-        <p class="note">شحن سريع – تقييمات مرتفعة</p>
-        <a class="btn" href="https://www.amazon.sa/dp/B08N5WRWNW" target="_blank" rel="nofollow noopener">شاهد العرض</a>
-      </div>
-    </article>
-
-    <!-- مثال بطاقة 2 (Amazon) -->
-    <article class="card">
-      <img src="https://images.unsplash.com/photo-1512496015851-a90fb38ba796?q=80&w=1200&auto=format&fit=crop" alt="كيبورد ميكانيكي">
-      <div class="p">
-        <span class="pill vendor">Amazon.sa</span>
-        <h3 style="margin:8px 0 6px">كيبورد ميكانيكي</h3>
-        <p class="note">مفاتيح قابلة للتبديل – RGB</p>
-        <a class="btn" href="https://www.amazon.sa/dp/B09V4R1P5Z" target="_blank" rel="nofollow noopener">شاهد العرض</a>
-      </div>
-    </article>
-
-    <!-- مثال بطاقة 3 (Noon – رابط عادي بدون تتبّع حالياً) -->
-    <article class="card">
-      <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1200&auto=format&fit=crop" alt="سماعات رأس">
-      <div class="p">
-        <span class="pill vendor">Noon</span>
-        <h3 style="margin:8px 0 6px">سماعات رأس</h3>
-        <p class="note">عرض من نون (سنضيف تتبّع الشريك بعد التسجيل)</p>
-        <a class="btn" href="https://www.noon.com/" target="_blank" rel="nofollow noopener">شاهد العرض</a>
-      </div>
-    </article>
-
+  <section id="offers-grid" class="grid" aria-live="polite">
+    <!-- سيتم توليد البطاقات هنا تلقائيًا -->
   </section>
 
   <section class="card" style="margin-top:18px">
-    <h2 style="margin-top:0">ملاحظات</h2>
-    <ul class="note">
-      <li>روابط Amazon.sa تضيف وسيماً تابعاً تلقائياً (Tracking ID).</li>
+    <h2 style="margin:16px 16px 0">ملاحظات</h2>
+    <ul class="note" style="padding:0 20px 16px; margin:8px 0 0">
+      <li>روابط Amazon.sa تُضيف وسيماً تابعاً تلقائيًا (<code>tag=kharaetnaapp-21</code>).</li>
       <li>روابط Noon ستكون تابعة بعد إتمام الاشتراك في برنامج الشركاء (نضيف الوسم لاحقًا).</li>
+      <li>تجنّب ذكر الأسعار/التقييمات أرقامًا ثابتة (تتغيّر). استخدم أدوات SiteStripe أو الـAPI لاحقًا إن احتجت.</li>
     </ul>
   </section>
 </main>
@@ -85,18 +54,97 @@
 </footer>
 
 <script>
-  // يضيف الوسم التابع تلقائياً لكل روابط Amazon.sa
-  (function(){
-    const TAG = "kharaetnaapp-21"; // ← Tracking ID الحالي
-    document.querySelectorAll('a[href*="amazon.sa"]').forEach(a=>{
-      try{
-        const u = new URL(a.href);
-        u.searchParams.set("tag", TAG);
-        // (اختياري) u.searchParams.set("linkCode","osi");
-        a.href = u.toString();
-        a.rel = (a.rel || "") + " sponsored";
-      }catch(e){}
-    });
+  // ——— الإعدادات ———
+  const AMAZON_TAG = "kharaetnaapp-21"; // ← Tracking ID أمازون الحالي
+
+  // ——— أين تضيف/تعدّل المنتجات؟ هنا ———
+  // كل عنصر يمثل بطاقة عرض. للـ Amazon يكفي تضع asin أو url (أو كلاهما).
+  // للصورة: مؤقتًا ضع صورة عامة، والأفضل لاحقًا استخدام صورة من SiteStripe.
+  const OFFERS = [
+    /* === أضف منتجات Amazon/Noon هنا (انسخ واحدًا وغيّر القيم) === */
+    {
+      vendor: "Amazon.sa",
+      title: "حقيبة ظهر بخيط شدّ",
+      desc: "خفيفة ومقاومة للماء (مثال).",
+      img: "https://images.unsplash.com/photo-1514477917009-389c76a86b68?q=80&w=1200&auto=format&fit=crop",
+      asin: "B0F4N4LXDQ"              // ← أسهل طريقة للـ Amazon
+      // url: "https://www.amazon.sa/dp/B0F4N4LXDQ" // (اختياري) لو تبي رابط كامل
+    },
+    {
+      vendor: "Amazon.sa",
+      title: "كيبورد ميكانيكي",
+      desc: "مفاتيح قابلة للتبديل – RGB",
+      img: "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?q=80&w=1200&auto=format&fit=crop",
+      asin: "B09V4R1P5Z"
+    },
+    {
+      vendor: "Noon",
+      title: "سماعات رأس",
+      desc: "عرض من نون (سنضيف وسم التتبع لاحقًا).",
+      img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1200&auto=format&fit=crop",
+      url: "https://www.noon.com/"
+    }
+    /* === نهاية القائمة. انسخ عنصرًا وزِد كما تشاء === */
+  ];
+
+  // ——— دوال مساعدة ———
+  function buildAmazonUrl(item){
+    // لو معك ASIN نولد رابط /dp/… تلقائيًا
+    if (item.asin) {
+      return `https://www.amazon.sa/dp/${encodeURIComponent(item.asin)}/?tag=${encodeURIComponent(AMAZON_TAG)}`;
+    }
+    // لو أعطيت رابط كامل، نضيف له tag
+    if (item.url) {
+      try {
+        const u = new URL(item.url);
+        if (u.hostname.endsWith("amazon.sa")) {
+          u.searchParams.set("tag", AMAZON_TAG);
+          return u.toString();
+        }
+      } catch(_) {}
+      return item.url;
+    }
+    return "#";
+  }
+
+  function resolveUrl(item){
+    if ((item.vendor||"").toLowerCase().includes("amazon")) {
+      return buildAmazonUrl(item);
+    }
+    return item.url || "#";
+  }
+
+  function cardHtml(item){
+    const href = resolveUrl(item);
+    const safeTitle = item.title || "عرض";
+    const safeDesc  = item.desc  || "";
+    const vendor = item.vendor || "";
+    const img = item.img || "https://picsum.photos/seed/offer/600/320";
+    return `
+      <article class="card">
+        <img src="${img}" alt="${safeTitle.replace(/"/g,"&quot;")}">
+        <div class="p">
+          <span class="pill vendor">${vendor}</span>
+          <h3 style="margin:8px 0 6px">${safeTitle}</h3>
+          <p class="note">${safeDesc}</p>
+          <a class="btn"
+             href="${href}"
+             target="_blank"
+             rel="nofollow sponsored noopener">شاهد العرض</a>
+        </div>
+      </article>
+    `;
+  }
+
+  // ——— توليد البطاقات ———
+  (function render(){
+    const grid = document.getElementById("offers-grid");
+    if (!grid) return;
+    if (!Array.isArray(OFFERS) || OFFERS.length === 0){
+      grid.innerHTML = `<div class="empty">لا توجد عروض متاحة الآن</div>`;
+      return;
+    }
+    grid.innerHTML = OFFERS.map(cardHtml).join("");
   })();
 </script>
 </body>
