@@ -39,9 +39,8 @@
   <section class="card" style="margin-top:18px">
     <h2 style="margin:16px 16px 0">ملاحظات</h2>
     <ul class="note" style="padding:0 20px 16px; margin:8px 0 0">
-      <li>روابط Amazon.sa تُضيف وسيماً تابعاً تلقائيًا (<code>tag=kharaetnaapp-21</code>).</li>
+      <li>روابط Amazon.sa تُضيف وسيماً تابعاً تلقائيًا (<code>tag=kharaetnaapp-21</code>) + <code>ascsubtag</code> للتتبّع.</li>
       <li>روابط Noon ستكون تابعة بعد إتمام الاشتراك في برنامج الشركاء (نضيف الوسم لاحقًا).</li>
-      <li>تجنّب ذكر الأسعار/التقييمات أرقامًا ثابتة (تتغيّر). استخدم أدوات SiteStripe أو الـAPI لاحقًا إن احتجت.</li>
     </ul>
   </section>
 </main>
@@ -53,98 +52,84 @@
   </div>
 </footer>
 
+<!-- ───────── السكربت: عدّل المنتجات فقط داخل PRODUCTS ───────── -->
 <script>
-  // ——— الإعدادات ———
-  const AMAZON_TAG = "kharaetnaapp-21"; // ← Tracking ID أمازون الحالي
+  // إعداد تتبّع أمازون
+  const AMAZON_TAG = "kharaetnaapp-21";
 
-  // ——— أين تضيف/تعدّل المنتجات؟ هنا ———
-  // كل عنصر يمثل بطاقة عرض. للـ Amazon يكفي تضع asin أو url (أو كلاهما).
-  // للصورة: مؤقتًا ضع صورة عامة، والأفضل لاحقًا استخدام صورة من SiteStripe.
-  const OFFERS = [
-    /* === أضف منتجات Amazon/Noon هنا (انسخ واحدًا وغيّر القيم) === */
+  // ✳️ أضف/عدّل منتجاتك هنا فقط
+  const PRODUCTS = [
     {
+      id: "bag-b0f4n4lxdq",
       vendor: "Amazon.sa",
-      title: "حقيبة ظهر بخيط شدّ",
-      desc: "خفيفة ومقاومة للماء (مثال).",
-      img: "https://images.unsplash.com/photo-1514477917009-389c76a86b68?q=80&w=1200&auto=format&fit=crop",
-      asin: "B0F4N4LXDQ"              // ← أسهل طريقة للـ Amazon
-      // url: "https://www.amazon.sa/dp/B0F4N4LXDQ" // (اختياري) لو تبي رابط كامل
+      title: "شنطة ظهر رياضية",
+      tagline: "مقاومة للماء • جيب أحذية",
+      url: "https://www.amazon.sa/dp/B0F4N4LXDQ",
+      img: "https://images.unsplash.com/photo-1520975933863-45b66b7a3766?q=80&w=1200&auto=format&fit=crop"
     },
     {
+      id: "kb-b09v4r1p5z",
       vendor: "Amazon.sa",
       title: "كيبورد ميكانيكي",
-      desc: "مفاتيح قابلة للتبديل – RGB",
-      img: "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?q=80&w=1200&auto=format&fit=crop",
-      asin: "B09V4R1P5Z"
+      tagline: "RGB • مفاتيح قابلة للتبديل",
+      url: "https://www.amazon.sa/dp/B09V4R1P5Z",
+      img: "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?q=80&w=1200&auto=format&fit=crop"
     },
     {
+      id: "noon-headphones",
       vendor: "Noon",
       title: "سماعات رأس",
-      desc: "عرض من نون (سنضيف وسم التتبع لاحقًا).",
-      img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1200&auto=format&fit=crop",
-      url: "https://www.noon.com/"
+      tagline: "عرض من نون (نضيف تتبّع الشريك لاحقًا)",
+      url: "https://www.noon.com/",
+      img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1200&auto=format&fit=crop"
     }
-    /* === نهاية القائمة. انسخ عنصرًا وزِد كما تشاء === */
   ];
 
-  // ——— دوال مساعدة ———
-  function buildAmazonUrl(item){
-    // لو معك ASIN نولد رابط /dp/… تلقائيًا
-    if (item.asin) {
-      return `https://www.amazon.sa/dp/${encodeURIComponent(item.asin)}/?tag=${encodeURIComponent(AMAZON_TAG)}`;
+  // ——— أدوات ———
+  const isAmazonShort = (u) => { try { return new URL(u).host.toLowerCase() === "amzn.to"; } catch { return false; } };
+  const isAmazonSa = (u) => { try { return /(^|\.)amazon\.sa$/i.test(new URL(u).host); } catch { return false; } };
+
+  function withAmazonTag(rawUrl, { ascsubtag } = {}) {
+    // الروابط القصيرة amzn.to يتركها كما هي (هي أصلاً تتبعية)
+    if (isAmazonShort(rawUrl)) return rawUrl;
+    try {
+      const url = new URL(rawUrl);
+      if (isAmazonSa(rawUrl)) {
+        url.searchParams.set("tag", AMAZON_TAG);
+        if (ascsubtag) url.searchParams.set("ascsubtag", ascsubtag);
+      }
+      return url.toString();
+    } catch {
+      return rawUrl;
     }
-    // لو أعطيت رابط كامل، نضيف له tag
-    if (item.url) {
-      try {
-        const u = new URL(item.url);
-        if (u.hostname.endsWith("amazon.sa")) {
-          u.searchParams.set("tag", AMAZON_TAG);
-          return u.toString();
-        }
-      } catch(_) {}
-      return item.url;
-    }
-    return "#";
   }
 
-  function resolveUrl(item){
-    if ((item.vendor||"").toLowerCase().includes("amazon")) {
-      return buildAmazonUrl(item);
-    }
-    return item.url || "#";
-  }
-
-  function cardHtml(item){
-    const href = resolveUrl(item);
-    const safeTitle = item.title || "عرض";
-    const safeDesc  = item.desc  || "";
-    const vendor = item.vendor || "";
-    const img = item.img || "https://picsum.photos/seed/offer/600/320";
+  function cardHtml(p, idx) {
+    const id = p.id || `p${idx+1}`;
+    const finalUrl = withAmazonTag(p.url || "#", { ascsubtag: id });
+    const img = p.img || "https://picsum.photos/seed/offer/600/320";
     return `
       <article class="card">
-        <img src="${img}" alt="${safeTitle.replace(/"/g,"&quot;")}">
+        <img src="${img}" alt="${(p.title||'عرض').replace(/"/g,'&quot;')}">
         <div class="p">
-          <span class="pill vendor">${vendor}</span>
-          <h3 style="margin:8px 0 6px">${safeTitle}</h3>
-          <p class="note">${safeDesc}</p>
-          <a class="btn"
-             href="${href}"
-             target="_blank"
-             rel="nofollow sponsored noopener">شاهد العرض</a>
+          <span class="pill vendor">${p.vendor||''}</span>
+          <h3 style="margin:8px 0 6px">${p.title||'عرض'}</h3>
+          ${p.tagline ? `<p class="note">${p.tagline}</p>` : ""}
+          <a class="btn" href="${finalUrl}" target="_blank" rel="nofollow noopener sponsored">شاهد العرض</a>
         </div>
       </article>
     `;
   }
 
   // ——— توليد البطاقات ———
-  (function render(){
+  (function render() {
     const grid = document.getElementById("offers-grid");
     if (!grid) return;
-    if (!Array.isArray(OFFERS) || OFFERS.length === 0){
+    if (!Array.isArray(PRODUCTS) || PRODUCTS.length === 0) {
       grid.innerHTML = `<div class="empty">لا توجد عروض متاحة الآن</div>`;
       return;
     }
-    grid.innerHTML = OFFERS.map(cardHtml).join("");
+    grid.innerHTML = PRODUCTS.map(cardHtml).join("");
   })();
 </script>
 </body>
