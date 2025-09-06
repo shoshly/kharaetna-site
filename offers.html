@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>العروض الإلكترونية – خرايطنا</title>
   <meta name="description" content="عروض إلكترونية مختارة من متاجر مثل Amazon و Noon بروابط تابعة. إفصاح: قد نحصل على عمولة عند الشراء عبر الروابط." />
+  <!-- admitad verify -->
+  <meta name="verify-admitad" content="6b83901fb1" />
+  <!-- /admitad verify -->
   <style>
     :root{--brand:#0f766e;--text:#0b2c2a;--muted:#344}
     body{font-family:system-ui,Segoe UI,Tahoma,Arial; margin:0; background:#f7f9f9; color:var(--text)}
@@ -39,8 +42,8 @@
   <section class="card" style="margin-top:18px">
     <h2 style="margin:16px 16px 0">ملاحظات</h2>
     <ul class="note" style="padding:0 20px 16px; margin:8px 0 0">
-      <li>روابط Amazon.sa تُضيف وسيماً تابعاً تلقائيًا (<code>tag=kharaetnaapp-21</code>) + <code>ascsubtag</code> للتتبّع.</li>
-      <li>روابط Noon ستكون تابعة بعد إتمام الاشتراك في برنامج الشركاء (نضيف الوسم لاحقًا).</li>
+      <li>روابط Amazon.sa تُضيف وسيماً تابعاً تلقائيًا (<code>tag=kharaetnaapp-21</code>) مع <code>ascsubtag</code> لتتبّع البطاقة.</li>
+      <li>روابط Noon ستكون تابعة بعد إتمام الاشتراك في برنامج الشركاء.</li>
     </ul>
   </section>
 </main>
@@ -90,7 +93,7 @@
   const isAmazonSa = (u) => { try { return /(^|\.)amazon\.sa$/i.test(new URL(u).host); } catch { return false; } };
 
   function withAmazonTag(rawUrl, { ascsubtag } = {}) {
-    // الروابط القصيرة amzn.to يتركها كما هي (هي أصلاً تتبعية)
+    // الروابط القصيرة amzn.to تبقى كما هي (هي أصلاً تتبعية)
     if (isAmazonShort(rawUrl)) return rawUrl;
     try {
       const url = new URL(rawUrl);
