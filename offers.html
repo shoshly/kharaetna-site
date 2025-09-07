@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>العروض الإلكترونية – خرايطنا</title>
-  <meta name="description" content="عروض إلكترونية مختارة من متاجر مثل Amazon و Noon بروابط تابعة. إفصاح: قد نحصل على عمولة عند الشراء عبر الروابط." />
+  <meta name="description" content="عروض إلكترونية مختارة من متاجر مثل Amazon ومتاجر محلية عبر Admitad. إفصاح: قد نحصل على عمولة عند الشراء عبر الروابط." />
   <!-- admitad verify -->
   <meta name="verify-admitad" content="6b83901fb1" />
   <!-- /admitad verify -->
@@ -42,8 +42,8 @@
   <section class="card" style="margin-top:18px">
     <h2 style="margin:16px 16px 0">ملاحظات</h2>
     <ul class="note" style="padding:0 20px 16px; margin:8px 0 0">
-      <li>روابط Amazon.sa تُضيف وسيماً تابعاً تلقائيًا (<code>tag=kharaetnaapp-21</code>) مع <code>ascsubtag</code> لتتبّع البطاقة.</li>
-      <li>روابط Noon ستكون تابعة بعد إتمام الاشتراك في برنامج الشركاء.</li>
+      <li>روابط Amazon.sa تُضيف الوسم <code>tag=kharaetnaapp-21</code> تلقائيًا مع <code>ascsubtag</code> يتضمن معرف البطاقة ومصدر الزيارة (ويب/أب).</li>
+      <li>روابط Admitad المختصرة تُضاف لها حقول <code>subid</code> تلقائيًا لتمييز المصدر (web/app) وموضع العرض.</li>
     </ul>
   </section>
 </main>
@@ -55,46 +55,19 @@
   </div>
 </footer>
 
-<!-- ───────── السكربت: عدّل المنتجات فقط داخل PRODUCTS ───────── -->
+<!-- ───────── السكربت ───────── -->
 <script>
-  // إعداد تتبّع أمازون
+  // ========= إعداد المصدر (app/web) =========
+  const params = new URLSearchParams(location.search);
+  const SRC = (params.get('src') === 'app') ? 'app' : 'web';
+
+  // ========= Amazon =========
   const AMAZON_TAG = "kharaetnaapp-21";
-
-  // ✳️ أضف/عدّل منتجاتك هنا فقط
-  const PRODUCTS = [
-    {
-      id: "bag-b0f4n4lxdq",
-      vendor: "Amazon.sa",
-      title: "شنطة ظهر رياضية",
-      tagline: "مقاومة للماء • جيب أحذية",
-      url: "https://www.amazon.sa/dp/B0F4N4LXDQ",
-      img: "https://images.unsplash.com/photo-1520975933863-45b66b7a3766?q=80&w=1200&auto=format&fit=crop"
-    },
-    {
-      id: "kb-b09v4r1p5z",
-      vendor: "Amazon.sa",
-      title: "كيبورد ميكانيكي",
-      tagline: "RGB • مفاتيح قابلة للتبديل",
-      url: "https://www.amazon.sa/dp/B09V4R1P5Z",
-      img: "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?q=80&w=1200&auto=format&fit=crop"
-    },
-    {
-      id: "noon-headphones",
-      vendor: "Noon",
-      title: "سماعات رأس",
-      tagline: "عرض من نون (نضيف تتبّع الشريك لاحقًا)",
-      url: "https://www.noon.com/",
-      img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1200&auto=format&fit=crop"
-    }
-  ];
-
-  // ——— أدوات ———
   const isAmazonShort = (u) => { try { return new URL(u).host.toLowerCase() === "amzn.to"; } catch { return false; } };
   const isAmazonSa = (u) => { try { return /(^|\.)amazon\.sa$/i.test(new URL(u).host); } catch { return false; } };
 
   function withAmazonTag(rawUrl, { ascsubtag } = {}) {
-    // الروابط القصيرة amzn.to تبقى كما هي (هي أصلاً تتبعية)
-    if (isAmazonShort(rawUrl)) return rawUrl;
+    if (isAmazonShort(rawUrl)) return rawUrl; // روابط amzn.to تتبعية مسبقًا
     try {
       const url = new URL(rawUrl);
       if (isAmazonSa(rawUrl)) {
@@ -107,16 +80,121 @@
     }
   }
 
+  // ========= Admitad shortlinks (subid) =========
+  // يضيف subid/subid1.. للروابط المختصرة من Admitad مثل: zejcl.com / naiawork.com / grfpr.com
+  function withSubIds(rawUrl, {subid='web', subid1='offers', subid2='sep-launch', subid3='ar', subid4=''} = {}) {
+    try {
+      const u = new URL(rawUrl);
+      u.searchParams.set('subid',  subid);
+      u.searchParams.set('subid1', subid1);
+      u.searchParams.set('subid2', subid2);
+      u.searchParams.set('subid3', subid3);
+      if (subid4) u.searchParams.set('subid4', subid4);
+      return u.toString();
+    } catch {
+      return rawUrl;
+    }
+  }
+
+  // ========= المنتجات (عدّل/أضِف هنا) =========
+  // type: 'amazon' | 'admitad' | 'direct'
+  const PRODUCTS = [
+    // ——— روابط Admitad التي زوّدتني بها ———
+    {
+      id: "lg-aff",
+      type: "admitad",
+      vendor: "LG KSA",
+      title: "LG – عروض إلكترونيات",
+      tagline: "خصومات مختارة",
+      url: "https://zejcl.com/g/efmcw9mw1i68b3901fb1c31d685009/",
+      img: "https://via.placeholder.com/600x360?text=LG+Deals"
+    },
+    {
+      id: "blends-aff",
+      type: "admitad",
+      vendor: "Blends Home",
+      title: "BLENDS – خصومات المنزل",
+      tagline: "خصومات فعّالة",
+      url: "https://naiawork.com/g/kvg8wenzbu68b3901fb1fccf131c5d/",
+      img: "https://via.placeholder.com/600x360?text=Blends+Home"
+    },
+    {
+      id: "sedar-aff",
+      type: "admitad",
+      vendor: "Sedar",
+      title: "Sedar – ستائر ومفروشات",
+      tagline: "عروض الآن",
+      url: "https://grfpr.com/g/271utp80e268b3901fb198c772a893/",
+      img: "https://via.placeholder.com/600x360?text=Sedar"
+    },
+
+    // ——— أمثلة Amazon (تُضاف tag وascsubtag تلقائيًا) ———
+    {
+      id: "bag-b0f4n4lxdq",
+      type: "amazon",
+      vendor: "Amazon.sa",
+      title: "شنطة ظهر رياضية",
+      tagline: "مقاومة للماء • جيب أحذية",
+      url: "https://www.amazon.sa/dp/B0F4N4LXDQ",
+      img: "https://images.unsplash.com/photo-1520975933863-45b66b7a3766?q=80&w=1200&auto=format&fit=crop"
+    },
+    {
+      id: "kb-b09v4r1p5z",
+      type: "amazon",
+      vendor: "Amazon.sa",
+      title: "كيبورد ميكانيكي",
+      tagline: "RGB • مفاتيح قابلة للتبديل",
+      url: "https://www.amazon.sa/dp/B09V4R1P5Z",
+      img: "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?q=80&w=1200&auto=format&fit=crop"
+    },
+
+    // ——— مثال مباشر (بدون تتبّع شبكات) ———
+    {
+      id: "noon-headphones",
+      type: "direct",
+      vendor: "Noon",
+      title: "سماعات رأس",
+      tagline: "عرض مباشر من نون",
+      url: "https://www.noon.com/",
+      img: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=1200&auto=format&fit=crop"
+    }
+  ];
+
+  // ========= توليد الرابط النهائي حسب النوع =========
+  function buildFinalUrl(p) {
+    const id = p.id || 'offer';
+    if (p.type === 'amazon') {
+      // ascsubtag يضم id + مصدر الزيارة
+      return withAmazonTag(p.url, { ascsubtag: `${id}|src:${SRC}|plc:offers` });
+    }
+    if (p.type === 'admitad') {
+      // نضيف subid تلقائيًا: web/app + offers
+      return withSubIds(p.url, { subid: SRC, subid1: 'offers', subid2: 'sep-launch', subid3: 'ar' });
+    }
+    // direct
+    try {
+      const u = new URL(p.url);
+      u.searchParams.set('utm_source', 'kharaetna');
+      u.searchParams.set('utm_medium', SRC);
+      u.searchParams.set('utm_campaign', 'offers');
+      return u.toString();
+    } catch {
+      return p.url || "#";
+    }
+  }
+
+  // ========= بطاقة العرض =========
   function cardHtml(p, idx) {
-    const id = p.id || `p${idx+1}`;
-    const finalUrl = withAmazonTag(p.url || "#", { ascsubtag: id });
     const img = p.img || "https://picsum.photos/seed/offer/600/320";
+    const title = (p.title || 'عرض').replace(/"/g,'&quot;');
+    const finalUrl = buildFinalUrl(p);
+
     return `
       <article class="card">
-        <img src="${img}" alt="${(p.title||'عرض').replace(/"/g,'&quot;')}">
+        <img src="${img}" alt="${title}">
         <div class="p">
-          <span class="pill vendor">${p.vendor||''}</span>
-          <h3 style="margin:8px 0 6px">${p.title||'عرض'}</h3>
+          <span class="pill vendor">${p.vendor || ''}</span>
+          <h3 style="margin:8px 0 6px">${title}</h3>
           ${p.tagline ? `<p class="note">${p.tagline}</p>` : ""}
           <a class="btn" href="${finalUrl}" target="_blank" rel="nofollow noopener sponsored">شاهد العرض</a>
         </div>
@@ -124,7 +202,7 @@
     `;
   }
 
-  // ——— توليد البطاقات ———
+  // ========= رندر =========
   (function render() {
     const grid = document.getElementById("offers-grid");
     if (!grid) return;
